@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.11">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Armando Teixeira-Pinto">
+<meta name="dcterms.date" content="2025-07-01">
+
+<title>Workshop: Multiple Imputation in R</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="multiple imputation2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="multiple imputation2_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="multiple imputation2_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="multiple imputation2_files/libs/quarto-html/popper.min.js"></script>
+<script src="multiple imputation2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="multiple imputation2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="multiple imputation2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="multiple imputation2_files/libs/quarto-html/quarto-syntax-highlighting-73e053f00451a6823eaeab9714ac17cd.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="multiple imputation2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="multiple imputation2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="multiple imputation2_files/libs/bootstrap/bootstrap-743d51c2df97f2c43c028f094590cb9e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<style>html{ scroll-behavior: smooth; }</style>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Workshop Sections</h2>
+   
+  <ul>
+  <li><a href="#quick-background" id="toc-quick-background" class="nav-link active" data-scroll-target="#quick-background"><span class="header-section-number">1</span> Quick Background</a></li>
+  <li><a href="#step-1-install-and-load-packages" id="toc-step-1-install-and-load-packages" class="nav-link" data-scroll-target="#step-1-install-and-load-packages"><span class="header-section-number">2</span> Step 1: Install and Load Packages</a></li>
+  <li><a href="#step-2-simulate-the-complete-clinical-dataset" id="toc-step-2-simulate-the-complete-clinical-dataset" class="nav-link" data-scroll-target="#step-2-simulate-the-complete-clinical-dataset"><span class="header-section-number">3</span> Step 2: Simulate the Complete Clinical Dataset</a></li>
+  <li><a href="#step-3-introduce-missing-values-mcar-and-mar" id="toc-step-3-introduce-missing-values-mcar-and-mar" class="nav-link" data-scroll-target="#step-3-introduce-missing-values-mcar-and-mar"><span class="header-section-number">4</span> Step 3: Introduce Missing Values (MCAR and MAR)</a></li>
+  <li><a href="#step-4-explore-missing-data-patterns" id="toc-step-4-explore-missing-data-patterns" class="nav-link" data-scroll-target="#step-4-explore-missing-data-patterns"><span class="header-section-number">5</span> Step 4: Explore Missing Data Patterns</a></li>
+  <li><a href="#step-5-perform-multiple-imputation" id="toc-step-5-perform-multiple-imputation" class="nav-link" data-scroll-target="#step-5-perform-multiple-imputation"><span class="header-section-number">6</span> Step 5: Perform Multiple Imputation</a></li>
+  <li><a href="#step-6-analyze-the-imputed-datasets" id="toc-step-6-analyze-the-imputed-datasets" class="nav-link" data-scroll-target="#step-6-analyze-the-imputed-datasets"><span class="header-section-number">7</span> Step 6: Analyze the Imputed Datasets</a></li>
+  <li><a href="#step-8-compare-to-complete-case-analysis-for-illustration" id="toc-step-8-compare-to-complete-case-analysis-for-illustration" class="nav-link" data-scroll-target="#step-8-compare-to-complete-case-analysis-for-illustration"><span class="header-section-number">8</span> Step 8: Compare to Complete-Case Analysis (For Illustration)</a></li>
+  <li><a href="#workshop-exercises" id="toc-workshop-exercises" class="nav-link" data-scroll-target="#workshop-exercises"><span class="header-section-number">9</span> Workshop Exercises</a></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Workshop: Multiple Imputation in R</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Armando Teixeira-Pinto </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 1, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This tutorial will guide you through a step-by-step example using a simulated clinical dataset. We’ll cover the basics of missing data mechanisms (MCAR and MAR), how to introduce them, explore patterns, perform MI, analyze imputed data, and pool results.</p>
+<section id="quick-background" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="quick-background"><span class="header-section-number">1</span> Quick Background</h2>
+<ul>
+<li><strong>Missing Data Mechanisms</strong>:
+<ul>
+<li><strong>MCAR (Missing Completely at Random)</strong>: Missingness is unrelated to observed or unobserved data (e.g., random data entry errors).</li>
+<li><strong>MAR (Missing at Random)</strong>: Missingness depends on observed data but not unobserved (e.g., older patients skip certain tests).</li>
+<li><strong>MNAR (Missing Not at Random)</strong>: Missingness depends on unobserved data (not covered here, as MI assumes MCAR/MAR).</li>
+</ul></li>
+<li><strong>Multiple Imputation</strong>: Creates multiple (e.g., 5) plausible datasets by imputing missing values, analyzes each, and pools results for valid inference. We’ll use the <code>mice</code> package, which handles MI via chained equations.</li>
+</ul>
+<p>We’ll simulate a clinical dataset on 200 patients with variables: age (continuous), gender (binary), systolic blood pressure (SBP, continuous), cholesterol (continuous), and disease outcome (binary: 0=no, 1=yes). We’ll introduce MCAR missingness in SBP and MAR missingness in cholesterol (more missing for older patients).</p>
+<p><strong>Note</strong>: Run the code in RStudio or your R environment. I’ll provide code blocks, explanations, and expected outputs/descriptions. If you encounter errors, ensure packages are installed.</p>
+</section>
+<section id="step-1-install-and-load-packages" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="step-1-install-and-load-packages"><span class="header-section-number">2</span> Step 1: Install and Load Packages</h2>
+<p>We need <code>mice</code> for imputation and <code>VIM</code> for visualizing missing patterns (optional but helpful).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install packages if not already installed</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">#install.packages(c("mice", "gtsummary", "finalfit"))</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load libraries</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mice)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(finalfit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li><strong>What this does</strong>: Installs/loads tools. <code>mice</code> performs MI; <code>VIM</code> helps visualize missings.</li>
+<li><strong>Expected output</strong>: No output if already installed; otherwise, installation messages.</li>
+</ul>
+</section>
+<section id="step-2-simulate-the-complete-clinical-dataset" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="step-2-simulate-the-complete-clinical-dataset"><span class="header-section-number">3</span> Step 2: Simulate the Complete Clinical Dataset</h2>
+<p>We’ll create a dataset with correlated variables to mimic real clinical data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set seed for reproducibility</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate 200 patients</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">200</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(n, <span class="at">mean =</span> <span class="dv">50</span>, <span class="at">sd =</span> <span class="dv">10</span>)  <span class="co"># Age ~ N(50, 10)</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>gender <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.5</span>)  <span class="co"># Gender: 0=female, 1=male (50% each)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>sbp <span class="ot">&lt;-</span> <span class="dv">120</span> <span class="sc">+</span> <span class="fl">0.5</span> <span class="sc">*</span> age <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">10</span>)  <span class="co"># SBP increases with age</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>cholesterol <span class="ot">&lt;-</span> <span class="dv">200</span> <span class="sc">+</span> <span class="fl">0.3</span> <span class="sc">*</span> age <span class="sc">+</span> <span class="dv">10</span> <span class="sc">*</span> gender <span class="sc">+</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="dv">20</span>)  <span class="co"># Cholesterol higher in males and with age</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>disease <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, <span class="fu">plogis</span>(<span class="sc">-</span><span class="dv">5</span> <span class="sc">+</span> <span class="fl">0.05</span> <span class="sc">*</span> age <span class="sc">+</span> <span class="fl">0.01</span> <span class="sc">*</span> sbp <span class="sc">+</span> <span class="fl">0.005</span> <span class="sc">*</span> cholesterol))  <span class="co"># Logistic probability of disease</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine into data frame</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>data_complete <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(age, gender, sbp, cholesterol, disease)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># View summary</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(data_complete)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      age            gender           sbp         cholesterol   
+ Min.   :26.91   Min.   :0.000   Min.   :116.9   Min.   :163.9  
+ 1st Qu.:43.74   1st Qu.:0.000   1st Qu.:138.6   1st Qu.:204.9  
+ Median :49.41   Median :1.000   Median :145.0   Median :218.1  
+ Mean   :49.91   Mean   :0.505   Mean   :145.3   Mean   :218.1  
+ 3rd Qu.:55.68   3rd Qu.:1.000   3rd Qu.:152.9   3rd Qu.:232.8  
+ Max.   :82.41   Max.   :1.000   Max.   :171.8   Max.   :280.2  
+    disease     
+ Min.   :0.000  
+ 1st Qu.:0.000  
+ Median :0.000  
+ Mean   :0.455  
+ 3rd Qu.:1.000  
+ Max.   :1.000  </code></pre>
+</div>
+</div>
+<ul>
+<li><p><strong>What this does</strong>: Generates realistic data. Age is normal; gender binary; SBP and cholesterol increase with age/gender; disease is logistic based on predictors.</p></li>
+<li><p><strong>Expected output</strong> (summary excerpt; actual numbers may vary slightly due to random generation, but means/SDs should match):</p>
+<pre><code>   age           gender            sbp          cholesterol       disease       
+Min.   :22.36   Min.   :0.0000   Min.   : 97.32   Min.   :147.8   Min.   :0.0000  
+1st Qu.:43.28   1st Qu.:0.0000   1st Qu.:136.64   1st Qu.:208.4   1st Qu.:0.0000  
+Median :50.00   Median :0.5000   Median :145.00   Median :220.0   Median :0.0000  
+Mean   :50.00   Mean   :0.5000   Mean   :145.00   Mean   :220.0   Mean   :0.1500  
+3rd Qu.:56.72   3rd Qu.:1.0000   3rd Qu.:153.36   3rd Qu.:231.6   3rd Qu.:0.0000  
+Max.   :77.64   Max.   :1.0000   Max.   :192.68   Max.   :292.2   Max.   :1.0000  </code></pre></li>
+</ul>
+</section>
+<section id="step-3-introduce-missing-values-mcar-and-mar" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="step-3-introduce-missing-values-mcar-and-mar"><span class="header-section-number">4</span> Step 3: Introduce Missing Values (MCAR and MAR)</h2>
+<p>Now, add missings: 10% MCAR in SBP (random), 20% MAR in cholesterol (higher probability if age &gt; 60).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Copy complete data</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>data_missing <span class="ot">&lt;-</span> data_complete</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># MCAR: Randomly set 10% of SBP to NA</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>missing_sbp <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>n, <span class="at">size =</span> <span class="fu">round</span>(<span class="fl">0.1</span> <span class="sc">*</span> n), <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>data_missing<span class="sc">$</span>sbp[missing_sbp] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># MAR: For cholesterol, missing with prob 0.3 if age &gt; 60, else 0.05</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>prob_missing_chol <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(data_missing<span class="sc">$</span>age <span class="sc">&gt;</span> <span class="dv">60</span>, <span class="fl">0.3</span>, <span class="fl">0.05</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>missing_chol <span class="ot">&lt;-</span> <span class="fu">rbinom</span>(n, <span class="dv">1</span>, prob_missing_chol) <span class="sc">==</span> <span class="dv">1</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>data_missing<span class="sc">$</span>cholesterol[missing_chol] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># View summary to confirm missings</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>data_missing <span class="sc">%&gt;%</span> </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tbl_summary</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div id="qfeqxpiken" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#qfeqxpiken table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#qfeqxpiken thead, #qfeqxpiken tbody, #qfeqxpiken tfoot, #qfeqxpiken tr, #qfeqxpiken td, #qfeqxpiken th {
+  border-style: none;
+}
+
+#qfeqxpiken p {
+  margin: 0;
+  padding: 0;
+}
+
+#qfeqxpiken .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#qfeqxpiken .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#qfeqxpiken .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#qfeqxpiken .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#qfeqxpiken .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#qfeqxpiken .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#qfeqxpiken .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#qfeqxpiken .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#qfeqxpiken .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#qfeqxpiken .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#qfeqxpiken .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#qfeqxpiken .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#qfeqxpiken .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#qfeqxpiken .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#qfeqxpiken .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qfeqxpiken .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#qfeqxpiken .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#qfeqxpiken .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#qfeqxpiken .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qfeqxpiken .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#qfeqxpiken .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qfeqxpiken .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#qfeqxpiken .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qfeqxpiken .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#qfeqxpiken .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#qfeqxpiken .gt_left {
+  text-align: left;
+}
+
+#qfeqxpiken .gt_center {
+  text-align: center;
+}
+
+#qfeqxpiken .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#qfeqxpiken .gt_font_normal {
+  font-weight: normal;
+}
+
+#qfeqxpiken .gt_font_bold {
+  font-weight: bold;
+}
+
+#qfeqxpiken .gt_font_italic {
+  font-style: italic;
+}
+
+#qfeqxpiken .gt_super {
+  font-size: 65%;
+}
+
+#qfeqxpiken .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#qfeqxpiken .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#qfeqxpiken .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#qfeqxpiken .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#qfeqxpiken .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#qfeqxpiken .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#qfeqxpiken .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#qfeqxpiken .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#qfeqxpiken div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="stat_0" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>N = 200</strong><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">age</td>
+<td class="gt_row gt_center" headers="stat_0">49 (44, 56)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">gender</td>
+<td class="gt_row gt_center" headers="stat_0">101 (51%)</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">sbp</td>
+<td class="gt_row gt_center" headers="stat_0">145 (138, 153)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;Unknown</td>
+<td class="gt_row gt_center" headers="stat_0">20</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">cholesterol</td>
+<td class="gt_row gt_center" headers="stat_0">219 (206, 234)</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;Unknown</td>
+<td class="gt_row gt_center" headers="stat_0">22</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">disease</td>
+<td class="gt_row gt_center" headers="stat_0">91 (46%)</td>
+</tr>
+</tbody><tfoot class="gt_footnotes">
+<tr class="odd">
+<td colspan="2" class="gt_footnote"><span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height:0;"><sup>1</sup></span> Median (Q1, Q3); n (%)</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+<ul>
+<li><strong>What this does</strong>: Introduces MCAR (purely random) in SBP and MAR (depends on observed age) in cholesterol. No missings in other variables for simplicity.</li>
+<li><strong>Expected output</strong> (summary shows NAs):</li>
+</ul>
+<pre><code>     age           gender            sbp          cholesterol       disease       
+  Min.   :22.36   Min.   :0.0000   Min.   : 97.32   Min.   :147.8   Min.   :0.0000  
+  ... (similar to above, but with)                NA's   :25      ...             
+                                                  NA's   :20                      </code></pre>
+<ul>
+<li>About 20 NAs in SBP (10%), ~25 in cholesterol (higher due to MAR).</li>
+</ul>
+</section>
+<section id="step-4-explore-missing-data-patterns" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="step-4-explore-missing-data-patterns"><span class="header-section-number">5</span> Step 4: Explore Missing Data Patterns</h2>
+<p>Visualize and quantify missings to understand mechanisms.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Proportion of missing data per variable</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colMeans</span>(<span class="fu">is.na</span>(data_missing))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        age      gender         sbp cholesterol     disease 
+       0.00        0.00        0.10        0.11        0.00 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Missing data pattern with mice</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">md.pattern</span>(data_missing)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="multiple-imputation2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    age gender disease sbp cholesterol   
+162   1      1       1   1           1  0
+18    1      1       1   1           0  1
+16    1      1       1   0           1  1
+4     1      1       1   0           0  2
+      0      0       0  20          22 42</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize missing patterns (using finalfit)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">missing_pairs</span>(data_missing)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="multiple-imputation2_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p><strong>What this does</strong>:</p>
+<ul>
+<li><code>colMeans(is.na())</code>: Shows % missing per variable.</li>
+<li><code>md.pattern()</code>: Table of missing patterns (e.g., rows with both missing, one missing).</li>
+<li><code>missing_pairs()</code>: Plots the boxplots for each variable comparing the missing vs non-missing cases on each of the remaining variables.</li>
+</ul></li>
+<li><p><strong>Expected output</strong>:</p>
+<ul>
+<li>Proportions: age=0, gender=0, sbp~0.10, cholesterol~0.125, disease=0.</li>
+<li>md.pattern: A table like:</li>
+</ul>
+<pre><code>    age gender disease sbp cholesterol   |
+  155   1      1       1   1           0  0
+   20   1      1       1   0           1  1
+   20   1      1       0   1           1  1
+    5   1      1       0   0           1  2
+        0      0      25  20              45
+
+  (155 complete rows; 20 with only sbp missing; etc. Total missings: 45).</code></pre>
+<ul>
+<li>Plot: Only SBP and cholesterol will have a boxplot for missing. Age should be slightly higher for patients with missing cholesterol.</li>
+</ul></li>
+</ul>
+</section>
+<section id="step-5-perform-multiple-imputation" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="step-5-perform-multiple-imputation"><span class="header-section-number">6</span> Step 5: Perform Multiple Imputation</h2>
+<p>Use <code>mice</code> with predictive mean matching (pmm) for continuous vars, logistic for binary (though disease has no missings).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initialize imputation (quick check)</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>ini <span class="ot">&lt;-</span> <span class="fu">mice</span>(data_missing, <span class="at">maxit =</span> <span class="dv">0</span>)  <span class="co"># Gets default methods</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Run MI: 5 imputations, 10 iterations (default meth='pmm' for continuous)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>imp <span class="ot">&lt;-</span> <span class="fu">mice</span>(data_missing, <span class="at">m =</span> <span class="dv">5</span>, <span class="at">maxit =</span> <span class="dv">10</span>, <span class="at">method =</span> <span class="st">'pmm'</span>, <span class="at">seed =</span> <span class="dv">123</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ iter imp variable
+  1   1  sbp  cholesterol
+  1   2  sbp  cholesterol
+  1   3  sbp  cholesterol
+  1   4  sbp  cholesterol
+  1   5  sbp  cholesterol
+  2   1  sbp  cholesterol
+  2   2  sbp  cholesterol
+  2   3  sbp  cholesterol
+  2   4  sbp  cholesterol
+  2   5  sbp  cholesterol
+  3   1  sbp  cholesterol
+  3   2  sbp  cholesterol
+  3   3  sbp  cholesterol
+  3   4  sbp  cholesterol
+  3   5  sbp  cholesterol
+  4   1  sbp  cholesterol
+  4   2  sbp  cholesterol
+  4   3  sbp  cholesterol
+  4   4  sbp  cholesterol
+  4   5  sbp  cholesterol
+  5   1  sbp  cholesterol
+  5   2  sbp  cholesterol
+  5   3  sbp  cholesterol
+  5   4  sbp  cholesterol
+  5   5  sbp  cholesterol
+  6   1  sbp  cholesterol
+  6   2  sbp  cholesterol
+  6   3  sbp  cholesterol
+  6   4  sbp  cholesterol
+  6   5  sbp  cholesterol
+  7   1  sbp  cholesterol
+  7   2  sbp  cholesterol
+  7   3  sbp  cholesterol
+  7   4  sbp  cholesterol
+  7   5  sbp  cholesterol
+  8   1  sbp  cholesterol
+  8   2  sbp  cholesterol
+  8   3  sbp  cholesterol
+  8   4  sbp  cholesterol
+  8   5  sbp  cholesterol
+  9   1  sbp  cholesterol
+  9   2  sbp  cholesterol
+  9   3  sbp  cholesterol
+  9   4  sbp  cholesterol
+  9   5  sbp  cholesterol
+  10   1  sbp  cholesterol
+  10   2  sbp  cholesterol
+  10   3  sbp  cholesterol
+  10   4  sbp  cholesterol
+  10   5  sbp  cholesterol</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># View imputation summary</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(imp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Class: mids
+Number of multiple imputations:  5 
+Imputation methods:
+        age      gender         sbp cholesterol     disease 
+         ""          ""       "pmm"       "pmm"          "" 
+PredictorMatrix:
+            age gender sbp cholesterol disease
+age           0      1   1           1       1
+gender        1      0   1           1       1
+sbp           1      1   0           1       1
+cholesterol   1      1   1           0       1
+disease       1      1   1           1       0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>imp<span class="sc">$</span>imp<span class="sc">$</span>sbp  <span class="co"># View imputed values for sbp in each of 5 datasets</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           1        2        3        4        5
+11  150.6400 150.6400 150.7182 139.1597 147.0346
+18  143.4432 155.3836 143.4040 134.9264 139.8879
+20  134.9391 152.0965 146.6613 147.9637 143.9789
+22  137.7108 158.9177 143.8104 137.7108 158.0949
+29  121.8521 155.3836 144.8238 129.7153 158.4138
+35  152.1910 144.4197 151.0227 163.3833 156.4160
+54  160.9698 151.8679 158.9832 158.9832 154.4565
+73  160.9698 156.8871 136.0985 165.0391 159.6973
+89  156.5339 140.7124 146.1055 143.8104 142.7841
+90  158.1806 147.0346 148.5807 158.1806 142.7841
+114 145.3743 165.0391 138.7003 158.4138 148.6589
+142 158.4138 157.0377 133.6083 131.6002 142.5116
+162 143.7383 141.0368 122.2011 143.8843 144.8238
+169 157.3079 142.5116 145.5011 148.2066 146.4325
+171 131.2147 146.0993 149.0003 131.6002 144.4197
+175 142.0794 131.6403 149.7078 150.1539 143.8104
+179 134.5979 151.0139 148.8287 134.5979 136.0985
+188 131.6403 146.1055 144.8940 140.1755 152.1280
+190 153.9325 131.9878 132.8312 129.7153 134.3266
+197 162.3120 128.2694 135.8200 134.5979 164.5828</code></pre>
+</div>
+</div>
+<ul>
+<li><strong>What this does</strong>: <code>mice()</code> imputes via chained equations (iterates over variables). m=5 datasets; pmm uses observed values close to predicted.</li>
+<li><strong>Expected output</strong>:
+<ul>
+<li>summary(imp): Shows imputation chain, methods (pmm for sbp/cholesterol).</li>
+<li>imp<span class="math inline">\(imp\)</span>sbp: A 20x5 matrix (rows=missing cases, columns=imputations) with plausible values ~140-150 range.</li>
+</ul></li>
+</ul>
+<p>Check convergence (trace plots should stabilize):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(imp)  <span class="co"># Trace plots for mean/SD of imputations</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="multiple-imputation2_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><strong>Expected</strong>: Lines for each imputation chain flatten after iterations (good convergence).</li>
+</ul>
+</section>
+<section id="step-6-analyze-the-imputed-datasets" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="step-6-analyze-the-imputed-datasets"><span class="header-section-number">7</span> Step 6: Analyze the Imputed Datasets</h2>
+<p>Fit a logistic regression on each imputed dataset: disease ~ age + gender + sbp + cholesterol.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit model on each imputed dataset</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">with</span>(imp, </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>            <span class="fu">glm</span>(disease <span class="sc">~</span> age <span class="sc">+</span> gender <span class="sc">+</span> sbp <span class="sc">+</span> cholesterol, </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">family =</span> binomial))</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># View one example fit</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit<span class="sc">$</span>analyses[[<span class="dv">1</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = disease ~ age + gender + sbp + cholesterol, family = binomial)
+
+Coefficients:
+             Estimate Std. Error z value Pr(&gt;|z|)   
+(Intercept) -5.768184   2.590792  -2.226  0.02599 * 
+age          0.049413   0.017541   2.817  0.00485 **
+gender      -0.157686   0.310748  -0.507  0.61185   
+sbp         -0.001305   0.014307  -0.091  0.92732   
+cholesterol  0.015410   0.007755   1.987  0.04690 * 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 275.64  on 199  degrees of freedom
+Residual deviance: 260.73  on 195  degrees of freedom
+AIC: 270.73
+
+Number of Fisher Scoring iterations: 4</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">#View graphically the imputed values for the different values</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">stripplot</span>(imp , <span class="at">pch =</span> <span class="fu">c</span>(<span class="dv">21</span>, <span class="dv">20</span>), <span class="at">cex =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">1.5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="multiple-imputation2_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co">#The distribution of the variables in the imputed datasets</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">densityplot</span>(imp , <span class="at">layout =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="multiple-imputation2_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><strong>What this does</strong>: <code>with()</code> applies glm to each of the 5 imputed datasets.</li>
+<li><strong>Expected output</strong>: List of 5 glm summaries. Each like a standard glm output, e.g., coefficients for age positive/significant, ORs &gt;1 for risk factors. Variances differ slightly across imputations.</li>
+</ul>
+<section id="step-7-pool-results-and-interpret" class="level4" data-number="7.0.1">
+<h4 data-number="7.0.1" class="anchored" data-anchor-id="step-7-pool-results-and-interpret"><span class="header-section-number">7.0.1</span> Step 7: Pool Results and Interpret</h4>
+<p>Combine estimates using Rubin’s rules for valid SEs/confidence intervals.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pool the results</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>pooled <span class="ot">&lt;-</span> <span class="fu">pool</span>(fit)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Summary of pooled estimates</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(pooled)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         term     estimate   std.error   statistic        df     p.value
+1 (Intercept) -5.789083839 2.719388828 -2.12881798 147.84159 0.034926562
+2         age  0.047438144 0.017742251  2.67373884 179.49433 0.008193198
+3      gender -0.136711853 0.313121284 -0.43660990 182.58189 0.662910159
+4         sbp  0.000838251 0.015576747  0.05381425  94.31419 0.957196984
+5 cholesterol  0.014501995 0.008195971  1.76940531 105.08021 0.079727262</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pooled coefficients and confidence intervals</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>poolsummary <span class="ot">&lt;-</span> <span class="fu">summary</span>(pooled, <span class="at">conf.int =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>poolsummary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         term     estimate   std.error   statistic        df     p.value
+1 (Intercept) -5.789083839 2.719388828 -2.12881798 147.84159 0.034926562
+2         age  0.047438144 0.017742251  2.67373884 179.49433 0.008193198
+3      gender -0.136711853 0.313121284 -0.43660990 182.58189 0.662910159
+4         sbp  0.000838251 0.015576747  0.05381425  94.31419 0.957196984
+5 cholesterol  0.014501995 0.008195971  1.76940531 105.08021 0.079727262
+          2.5 %      97.5 %      conf.low   conf.high
+1 -11.162976733 -0.41519095 -11.162976733 -0.41519095
+2   0.012427921  0.08244837   0.012427921  0.08244837
+3  -0.754513294  0.48108959  -0.754513294  0.48108959
+4  -0.030088403  0.03176490  -0.030088403  0.03176490
+5  -0.001748957  0.03075295  -0.001748957  0.03075295</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co">#The tbl_regression does the pooling automatically!</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tbl_regression</span>(fit, <span class="at">exponentiate =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div id="bdeugdavif" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#bdeugdavif table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#bdeugdavif thead, #bdeugdavif tbody, #bdeugdavif tfoot, #bdeugdavif tr, #bdeugdavif td, #bdeugdavif th {
+  border-style: none;
+}
+
+#bdeugdavif p {
+  margin: 0;
+  padding: 0;
+}
+
+#bdeugdavif .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#bdeugdavif .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#bdeugdavif .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#bdeugdavif .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#bdeugdavif .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#bdeugdavif .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#bdeugdavif .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#bdeugdavif .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#bdeugdavif .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#bdeugdavif .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#bdeugdavif .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#bdeugdavif .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#bdeugdavif .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#bdeugdavif .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#bdeugdavif .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bdeugdavif .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#bdeugdavif .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#bdeugdavif .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#bdeugdavif .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bdeugdavif .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#bdeugdavif .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bdeugdavif .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#bdeugdavif .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bdeugdavif .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bdeugdavif .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bdeugdavif .gt_left {
+  text-align: left;
+}
+
+#bdeugdavif .gt_center {
+  text-align: center;
+}
+
+#bdeugdavif .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#bdeugdavif .gt_font_normal {
+  font-weight: normal;
+}
+
+#bdeugdavif .gt_font_bold {
+  font-weight: bold;
+}
+
+#bdeugdavif .gt_font_italic {
+  font-style: italic;
+}
+
+#bdeugdavif .gt_super {
+  font-size: 65%;
+}
+
+#bdeugdavif .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#bdeugdavif .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#bdeugdavif .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#bdeugdavif .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#bdeugdavif .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#bdeugdavif .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#bdeugdavif .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#bdeugdavif .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#bdeugdavif div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="estimate" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>OR</strong></th>
+<th id="conf.low" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>95% CI</strong></th>
+<th id="p.value" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>p-value</strong></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">age</td>
+<td class="gt_row gt_center" headers="estimate">1.05</td>
+<td class="gt_row gt_center" headers="conf.low">1.01, 1.09</td>
+<td class="gt_row gt_center" headers="p.value">0.008</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">gender</td>
+<td class="gt_row gt_center" headers="estimate">0.87</td>
+<td class="gt_row gt_center" headers="conf.low">0.47, 1.62</td>
+<td class="gt_row gt_center" headers="p.value">0.7</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">sbp</td>
+<td class="gt_row gt_center" headers="estimate">1.00</td>
+<td class="gt_row gt_center" headers="conf.low">0.97, 1.03</td>
+<td class="gt_row gt_center" headers="p.value">&gt;0.9</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">cholesterol</td>
+<td class="gt_row gt_center" headers="estimate">1.01</td>
+<td class="gt_row gt_center" headers="conf.low">1.00, 1.03</td>
+<td class="gt_row gt_center" headers="p.value">0.080</td>
+</tr>
+</tbody><tfoot class="gt_sourcenotes">
+<tr class="odd">
+<td colspan="4" class="gt_sourcenote">Abbreviations: CI = Confidence Interval, OR = Odds Ratio</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+<ul>
+<li><p><strong>What this does</strong>: <code>pool()</code> averages coefficients, adjusts SEs for imputation uncertainty.</p></li>
+<li><p><strong>Expected output</strong> (example pooled summary; actual values depend on data):</p>
+<pre><code>           estimate  std.error statistic       df      p.value      2.5 %     97.5 %
+(Intercept) -6.5123   1.2345    -5.275   150.2   3.45e-07   -8.9523   -4.0723
+age          0.0456   0.0123     3.707   180.5   0.00028    0.0213    0.0699
+gender       0.3124   0.4567     0.684   190.1   0.49480   -0.5889    1.2137
+sbp          0.0102   0.0056     1.821   170.3   0.07040   -0.0008    0.0212
+cholesterol  0.0048   0.0021     2.286   160.4   0.02350    0.0006    0.0090</code></pre>
+<ul>
+<li>Interpretation: Age and cholesterol significantly associated with disease (p&lt;0.05). SEs larger than complete-case analysis due to imputation uncertainty.</li>
+<li>Fraction of missing information (FMI) via <code>pooled$fmi</code> (higher for variables with more missings).</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="step-8-compare-to-complete-case-analysis-for-illustration" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="step-8-compare-to-complete-case-analysis-for-illustration"><span class="header-section-number">8</span> Step 8: Compare to Complete-Case Analysis (For Illustration)</h2>
+<p>To see MI’s benefits, run on complete cases (biased under MAR).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Complete-case logistic regression</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>fit_cc <span class="ot">&lt;-</span> <span class="fu">glm</span>(disease <span class="sc">~</span> age <span class="sc">+</span> gender <span class="sc">+</span> sbp <span class="sc">+</span> cholesterol, </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> binomial, </span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> data_missing[<span class="fu">complete.cases</span>(data_missing), ])</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">tbl_regression</span>(fit_cc, <span class="at">exponentiate =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div id="zudnvhgtez" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#zudnvhgtez table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#zudnvhgtez thead, #zudnvhgtez tbody, #zudnvhgtez tfoot, #zudnvhgtez tr, #zudnvhgtez td, #zudnvhgtez th {
+  border-style: none;
+}
+
+#zudnvhgtez p {
+  margin: 0;
+  padding: 0;
+}
+
+#zudnvhgtez .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#zudnvhgtez .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#zudnvhgtez .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#zudnvhgtez .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#zudnvhgtez .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#zudnvhgtez .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#zudnvhgtez .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#zudnvhgtez .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#zudnvhgtez .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#zudnvhgtez .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#zudnvhgtez .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#zudnvhgtez .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#zudnvhgtez .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#zudnvhgtez .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#zudnvhgtez .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zudnvhgtez .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#zudnvhgtez .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#zudnvhgtez .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#zudnvhgtez .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zudnvhgtez .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#zudnvhgtez .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zudnvhgtez .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#zudnvhgtez .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zudnvhgtez .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#zudnvhgtez .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zudnvhgtez .gt_left {
+  text-align: left;
+}
+
+#zudnvhgtez .gt_center {
+  text-align: center;
+}
+
+#zudnvhgtez .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#zudnvhgtez .gt_font_normal {
+  font-weight: normal;
+}
+
+#zudnvhgtez .gt_font_bold {
+  font-weight: bold;
+}
+
+#zudnvhgtez .gt_font_italic {
+  font-style: italic;
+}
+
+#zudnvhgtez .gt_super {
+  font-size: 65%;
+}
+
+#zudnvhgtez .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#zudnvhgtez .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#zudnvhgtez .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#zudnvhgtez .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#zudnvhgtez .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#zudnvhgtez .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#zudnvhgtez .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#zudnvhgtez .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#zudnvhgtez div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="estimate" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>OR</strong></th>
+<th id="conf.low" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>95% CI</strong></th>
+<th id="p.value" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>p-value</strong></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">age</td>
+<td class="gt_row gt_center" headers="estimate">1.04</td>
+<td class="gt_row gt_center" headers="conf.low">1.00, 1.08</td>
+<td class="gt_row gt_center" headers="p.value">0.058</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">gender</td>
+<td class="gt_row gt_center" headers="estimate">1.04</td>
+<td class="gt_row gt_center" headers="conf.low">0.53, 2.04</td>
+<td class="gt_row gt_center" headers="p.value">&gt;0.9</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">sbp</td>
+<td class="gt_row gt_center" headers="estimate">1.00</td>
+<td class="gt_row gt_center" headers="conf.low">0.97, 1.03</td>
+<td class="gt_row gt_center" headers="p.value">&gt;0.9</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">cholesterol</td>
+<td class="gt_row gt_center" headers="estimate">1.01</td>
+<td class="gt_row gt_center" headers="conf.low">1.00, 1.03</td>
+<td class="gt_row gt_center" headers="p.value">0.11</td>
+</tr>
+</tbody><tfoot class="gt_sourcenotes">
+<tr class="odd">
+<td colspan="4" class="gt_sourcenote">Abbreviations: CI = Confidence Interval, OR = Odds Ratio</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+<ul>
+<li><strong>Expected</strong>: Similar coefficients but smaller sample (n~155), potentially biased (e.g., underestimated age effect due to MAR in cholesterol). MI provides better power/efficiency.</li>
+</ul>
+</section>
+<section id="workshop-exercises" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="workshop-exercises"><span class="header-section-number">9</span> Workshop Exercises</h2>
+<ol type="1">
+<li>Increase missing % to 30%—how does FMI change?</li>
+<li>Try other methods (e.g., method=‘norm’ for normal imputation).</li>
+<li>Impute with interactions (e.g., predictorMatrix in mice).</li>
+<li>Use <code>mitml</code> or <code>Amelia</code> for alternatives.</li>
+</ol>
+<p>This covers a full MI workflow! If you have questions or want to adapt for real data (e.g., NHANES), let me know. Remember, MI assumes MAR; diagnostics are key.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+<script src="multiple imputation2_files/libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
